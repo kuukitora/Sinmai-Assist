@@ -33,7 +33,6 @@ namespace SinmaiAssist
         private static bool _isPatchFailed = false;
         private static ConfigManager<MainConfig> _mainConfigManager;
         private static ConfigManager<KeyBindConfig> _keyBindConfigManager;
-        private static WebServer.WebServer _webServer;
         public static MainConfig MainConfig;
         public static KeyBindConfig KeyBindConfig;
         public static string GameID = "Unknown";
@@ -55,8 +54,8 @@ namespace SinmaiAssist
             try
             {
                 var keyBindCoverter = new KeyBindConfig.Converter();
-                _mainConfigManager = new ConfigManager<MainConfig>($"./{BuildInfo.Name}/config.yml");
-                _keyBindConfigManager = new ConfigManager<KeyBindConfig>($"./{BuildInfo.Name}/keybind.yml", keyBindCoverter);
+                _mainConfigManager = new ConfigManager<MainConfig>($"./{BuildInfo.Name}/Config.yml");
+                _keyBindConfigManager = new ConfigManager<KeyBindConfig>($"./{BuildInfo.Name}/KeyBindConfig.yml", keyBindCoverter);
                 MainConfig = _mainConfigManager.GetConfig();
                 KeyBindConfig = _keyBindConfigManager.GetConfig();
                 DummyLoginPanel.DummyUserId = MainConfig.Common.DummyLogin.DefaultUserId.ToString();
@@ -69,17 +68,6 @@ namespace SinmaiAssist
                 return;
             }
             
-            // 初始化WebServer
-            if (MainConfig.ModSetting.WebServer.Enable)
-            {
-                _webServer = new WebServer.WebServer(
-                    MainConfig.ModSetting.WebServer.Host,
-                    MainConfig.ModSetting.WebServer.Port,
-                    MainConfig.ModSetting.WebServer.Token
-                );
-                _webServer.Start();
-            }
-
             // 输出设备摄像头列表
             File.Delete($"{BuildInfo.Name}/WebCameraList.txt");
             WebCamDevice[] devices = WebCamTexture.devices;
@@ -199,8 +187,8 @@ namespace SinmaiAssist
             if (MainConfig.Cheat.FastSkip) Patch(typeof(FastSkip));
             if (MainConfig.Cheat.ChartController) Patch(typeof(ChartController));
             if (MainConfig.Cheat.AllCollection) Patch(typeof(AllCollection));
-            if (MainConfig.Cheat.UnlockMusic) Patch(typeof(UnlockMusic));
-            if (MainConfig.Cheat.UnlockMaster) Patch(typeof(UnlockMaster));
+            if (MainConfig.Cheat.UnlockMusic.Enable) Patch(typeof(UnlockMusic));
+            if (MainConfig.Cheat.UnlockMaster.Enable) Patch(typeof(UnlockMaster));
             if (MainConfig.Cheat.UnlockUtage.Enable) Patch(typeof(UnlockUtage));
             if (MainConfig.Cheat.UnlockEvent) Patch(typeof(UnlockEvent));
             if (MainConfig.Cheat.ResetLoginBonusRecord) Patch(typeof(ResetLoginBonusRecord));
@@ -218,7 +206,7 @@ namespace SinmaiAssist
         }
         public override void OnApplicationQuit()
         {
-            if (MainConfig.ModSetting.WebServer.Enable && _webServer.IsRunning()) _webServer.Stop();
+            
         }
 
         public override void OnGUI()
@@ -257,13 +245,13 @@ namespace SinmaiAssist
         {
             try
             {
-                var enableGameVersion = type.GetCustomAttribute<EnableGameVersionAttribute>();
-                if (enableGameVersion != null && !enableGameVersion.ShouldEnable())
-                {
-                    MelonLogger.Warning(
-                        $"Patch: {type} skipped ,Game version need Min {enableGameVersion.MinGameVersion} Max {enableGameVersion.MaxGameVersion}");
-                    return false;
-                }
+                // var enableGameVersion = type.GetCustomAttribute<EnableGameVersionAttribute>();
+                // if (enableGameVersion != null && !enableGameVersion.ShouldEnable())
+                // {
+                //     MelonLogger.Warning(
+                //         $"Patch: {type} skipped ,Game version need Min {enableGameVersion.MinGameVersion} Max {enableGameVersion.MaxGameVersion}");
+                //     return false;
+                // }
 
                 if (!noLoggerPrint) MelonLogger.Msg($"> Patch: {type}");
                 HarmonyLib.Harmony.CreateAndPatchAll(type);
@@ -296,11 +284,8 @@ namespace SinmaiAssist
                             $"\r\n Author: {BuildInfo.Author}");
             MelonLogger.Warning("\n" +
                                 "\r\n=================================================================" +
-                                "\r\n这是一个作弊Mod，后果自负,Mod仅限测试使用，禁止用于其他操作!" +
                                 "\r\nThis is a cheat mod. Use at your own risk!" +
-                                "\r\n这是一个免费的开源Mod项目，禁止倒卖!" +
                                 "\r\nThis is a free and open-source mod. Resale is strictly prohibited." +
-                                "\r\n如果你花了钱买了这个Mod，那你很愚蠢。" +
                                 "\r\nIf you paid for this mod, you are stupid." +
                                 "\r\n================================================================="
                                 );
